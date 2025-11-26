@@ -71,4 +71,4 @@ INSERT INTO reservations (customer_name, customer_contact, check_in_date, check_
 
 -- Insert sample payment
 INSERT INTO payments (reservation_id, amount, payment_method) VALUES
-(1, 1000000.00, 'cash');
+(1, 1000000.00, 'cash');    
