@@ -4,59 +4,61 @@
  */
 package views;
 
+import javax.swing.*;
+import java.awt.*;
+import controllers.UserController;
+
 /**
  *
  * @author rpipp
  */
-
-import javax.swing.*;
-import java.awt.*;
-public class LoginForm extends javax.swing.JFrame {
+public class RegisterForm extends javax.swing.JFrame {
     
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(LoginForm.class.getName());
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(RegisterForm.class.getName());
     private Image backgroundImage;
+    private UserController userController;
 
     /**
-     * Creates new form LoginForm
+     * Creates new form RegisterForm
      */
-public LoginForm() {
-    backgroundImage = new ImageIcon(getClass().getResource("/images/Background.jpg")).getImage();
-    initComponents();
-    
-    // Buat background panel
-    JPanel backgroundPanel = new JPanel(new GridBagLayout()) {
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
-        }
-    };
-    
-    // Modifikasi jPanel1 yang sudah dibuat GUI Builder agar semi-transparan
-    jPanel1.setOpaque(false);
-    jPanel1.setBackground(new Color(255, 255, 255, 191));
-    jPanel1.setPreferredSize(new Dimension(854, 480));
-    
-    // Override paintComponent untuk jPanel1 tidak bisa langsung,
-    // jadi bungkus dengan panel wrapper
-    JPanel centerPanel = new JPanel(new BorderLayout()) {
-        @Override
-        protected void paintComponent(Graphics g) {
-            g.setColor(new Color(255, 255, 255, 191));
-            g.fillRect(0, 0, getWidth(), getHeight());
-            super.paintComponent(g);
-        }
-    };
-    centerPanel.setOpaque(false);
-    centerPanel.setPreferredSize(new Dimension(854, 480));
-    centerPanel.add(jPanel1, BorderLayout.CENTER);  // Masukkan jPanel1 ke dalam centerPanel
-    
-    // Tambahkan ke background
-    backgroundPanel.add(centerPanel, new GridBagConstraints());
-    
-    setContentPane(backgroundPanel);
-}
-
+    public RegisterForm() {
+        userController = new UserController();
+        backgroundImage = new ImageIcon(getClass().getResource("/images/Background.jpg")).getImage();
+        initComponents();
+        
+        // Buat background panel
+        JPanel backgroundPanel = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+            }
+        };
+        
+        // Modifikasi jPanel1 yang sudah dibuat GUI Builder agar semi-transparan
+        jPanel1.setOpaque(false);
+        jPanel1.setBackground(new Color(255, 255, 255, 191));
+        jPanel1.setPreferredSize(new Dimension(854, 550)); // Slightly taller for extra field
+        
+        // Override paintComponent untuk jPanel1 tidak bisa langsung,
+        // jadi bungkus dengan panel wrapper
+        JPanel centerPanel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                g.setColor(new Color(255, 255, 255, 191));
+                g.fillRect(0, 0, getWidth(), getHeight());
+                super.paintComponent(g);
+            }
+        };
+        centerPanel.setOpaque(false);
+        centerPanel.setPreferredSize(new Dimension(854, 550));
+        centerPanel.add(jPanel1, BorderLayout.CENTER);  // Masukkan jPanel1 ke dalam centerPanel
+        
+        // Tambahkan ke background
+        backgroundPanel.add(centerPanel, new GridBagConstraints());
+        
+        setContentPane(backgroundPanel);
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -74,19 +76,21 @@ public LoginForm() {
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         passwordField = new javax.swing.JPasswordField();
-        loginButton = new javax.swing.JButton();
+        jLabelConfirm = new javax.swing.JLabel();
+        confirmPasswordField = new javax.swing.JPasswordField();
+        registerButton = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
-        registerLabel = new javax.swing.JLabel();
+        loginLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jPanel1.setForeground(new java.awt.Color(255, 255, 255));
 
         jLabel1.setFont(new java.awt.Font("Dubai Medium", 0, 48)); // NOI18N
-        jLabel1.setText("Login");
+        jLabel1.setText("Register");
 
         jLabel2.setFont(new java.awt.Font("Dubai Light", 0, 24)); // NOI18N
-        jLabel2.setText("Welcome back please login to your account");
+        jLabel2.setText("Create your account");
 
         usernameField.setFont(new java.awt.Font("Dubai Light", 0, 14)); // NOI18N
 
@@ -95,27 +99,30 @@ public LoginForm() {
 
         jLabel4.setFont(new java.awt.Font("Dubai Light", 0, 18)); // NOI18N
         jLabel4.setText("Password");
+        
+        jLabelConfirm.setFont(new java.awt.Font("Dubai Light", 0, 18)); // NOI18N
+        jLabelConfirm.setText("Confirm Password");
 
-        loginButton.setBackground(new java.awt.Color(0, 153, 51));
-        loginButton.setFont(new java.awt.Font("Dubai Medium", 0, 18)); // NOI18N
-        loginButton.setForeground(new java.awt.Color(255, 255, 255));
-        loginButton.setText("Login");
-        loginButton.addActionListener(new java.awt.event.ActionListener() {
+        registerButton.setBackground(new java.awt.Color(0, 153, 51));
+        registerButton.setFont(new java.awt.Font("Dubai Medium", 0, 18)); // NOI18N
+        registerButton.setForeground(new java.awt.Color(255, 255, 255));
+        registerButton.setText("Register");
+        registerButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                loginButtonActionPerformed(evt);
+                registerButtonActionPerformed(evt);
             }
         });
 
         jLabel5.setFont(new java.awt.Font("Dubai Light", 0, 14)); // NOI18N
-        jLabel5.setText("Dont have account?");
+        jLabel5.setText("Already have an account?");
 
-        registerLabel.setFont(new java.awt.Font("Dubai Light", 0, 14)); // NOI18N
-        registerLabel.setForeground(new java.awt.Color(0, 102, 204));
-        registerLabel.setText("<html><u>Register</u></html>");
-        registerLabel.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        registerLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+        loginLabel.setFont(new java.awt.Font("Dubai Light", 0, 14)); // NOI18N
+        loginLabel.setForeground(new java.awt.Color(0, 102, 204));
+        loginLabel.setText("<html><u>Login</u></html>");
+        loginLabel.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        loginLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                registerLabelMouseClicked(evt);
+                loginLabelMouseClicked(evt);
             }
         });
 
@@ -128,9 +135,11 @@ public LoginForm() {
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(196, 196, 196)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(155, 155, 155)
+                                .addGap(110, 110, 110)
+                                .addComponent(jLabel2))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(130, 130, 130)
                                 .addComponent(jLabel1))))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(246, 246, 246)
@@ -138,40 +147,46 @@ public LoginForm() {
                             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                 .addComponent(jLabel3)
                                 .addComponent(jLabel4)
+                                .addComponent(jLabelConfirm)
                                 .addComponent(usernameField)
-                                .addComponent(passwordField, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(passwordField)
+                                .addComponent(confirmPasswordField, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGap(6, 6, 6)
                                 .addComponent(jLabel5)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(registerLabel))))
+                                .addComponent(loginLabel))))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(315, 315, 315)
-                        .addComponent(loginButton, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(registerButton, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(615, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(31, 31, 31)
+                .addGap(20, 20, 20)
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(usernameField, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(usernameField, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel4)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(passwordField, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(1, 1, 1)
+                .addComponent(passwordField, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabelConfirm)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(confirmPasswordField, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(registerLabel)
+                    .addComponent(loginLabel)
                     .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(31, 31, 31)
-                .addComponent(loginButton, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(165, Short.MAX_VALUE))
+                .addGap(20, 20, 20)
+                .addComponent(registerButton, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(100, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -186,7 +201,7 @@ public LoginForm() {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(105, 105, 105)
+                .addGap(50, 50, 50)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(30, Short.MAX_VALUE))
         );
@@ -194,15 +209,34 @@ public LoginForm() {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void loginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginButtonActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_loginButtonActionPerformed
+    private void registerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_registerButtonActionPerformed
+        String username = usernameField.getText();
+        String password = new String(passwordField.getPassword());
+        String confirmPassword = new String(confirmPasswordField.getPassword());
 
-    private void registerLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_registerLabelMouseClicked
-        // Navigate to RegisterForm
-        new RegisterForm().setVisible(true);
+        if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all fields", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!password.equals(confirmPassword)) {
+            JOptionPane.showMessageDialog(this, "Passwords do not match", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (userController.addUser(username, password, "Guest")) {
+            JOptionPane.showMessageDialog(this, "Registration Successful! Please Login.");
+            new LoginForm().setVisible(true);
+            this.dispose();
+        } else {
+            JOptionPane.showMessageDialog(this, "Registration Failed", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_registerButtonActionPerformed
+
+    private void loginLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_loginLabelMouseClicked
+        new LoginForm().setVisible(true);
         this.dispose();
-    }//GEN-LAST:event_registerLabelMouseClicked
+    }//GEN-LAST:event_loginLabelMouseClicked
 
     /**
      * @param args the command line arguments
@@ -226,19 +260,21 @@ public LoginForm() {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new LoginForm().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new RegisterForm().setVisible(true));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPasswordField confirmPasswordField;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabelConfirm;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JButton loginButton;
+    private javax.swing.JLabel loginLabel;
     private javax.swing.JPasswordField passwordField;
-    private javax.swing.JLabel registerLabel;
+    private javax.swing.JButton registerButton;
     private javax.swing.JTextField usernameField;
     // End of variables declaration//GEN-END:variables
 }
