@@ -4,6 +4,17 @@
  */
 package views;
 
+import controllers.RoomController;
+import models.Room;
+import models.RoomType;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.JOptionPane;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.util.List;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
 /**
  *
  * @author LENOVO
@@ -11,12 +22,208 @@ package views;
 public class AdminDashboard extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(AdminDashboard.class.getName());
+    private RoomController roomController;
 
     /**
      * Creates new form AdminDashboard
      */
     public AdminDashboard() {
         initComponents();
+        initCustomComponents();
+    }
+
+    private void initCustomComponents() {
+        roomController = new RoomController();
+        setupTable();
+        setupButtons();
+        loadRooms();
+    }
+
+    private void setupTable() {
+        // Set table model
+        String[] columnNames = {"ID", "Room Number", "Type", "Price", "Status"};
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Disable editing directly in table
+            }
+        };
+        jTable1.setModel(model);
+        
+        // Add selection listener
+        jTable1.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (!e.getValueIsAdjusting()) {
+                    boolean rowSelected = jTable1.getSelectedRow() != -1;
+                    updateButton.setEnabled(rowSelected);
+                    deleteButton.setEnabled(rowSelected);
+                }
+            }
+        });
+        
+        // Initial button state
+        updateButton.setEnabled(false);
+        deleteButton.setEnabled(false);
+    }
+
+    private void setupButtons() {
+        // Create Button
+        jButton1.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showRoomDialog(null);
+            }
+        });
+
+        // Update Button
+        updateButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int selectedRow = jTable1.getSelectedRow();
+                if (selectedRow != -1) {
+                    int id = (int) jTable1.getValueAt(selectedRow, 0);
+                    Room room = roomController.getRoomById(id);
+                    if (room != null) {
+                        showRoomDialog(room);
+                    }
+                }
+            }
+        });
+
+        // Delete Button
+        deleteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                deleteRoom();
+            }
+        });
+    }
+
+    private void loadRooms() {
+        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+        model.setRowCount(0); // Clear existing data
+        
+        List<Room> rooms = roomController.getAllRooms();
+        for (Room room : rooms) {
+            model.addRow(new Object[]{
+                room.getId(),
+                room.getRoomNumber(),
+                room.getRoomTypeName(),
+                room.getPrice(),
+                room.getStatus()
+            });
+        }
+    }
+
+    private void showRoomDialog(Room room) {
+        // Create a dialog to add/edit room
+        javax.swing.JDialog dialog = new javax.swing.JDialog(this, room == null ? "Create Room" : "Update Room", true);
+        dialog.setSize(400, 300);
+        dialog.setLayout(new java.awt.GridLayout(6, 2, 10, 10));
+        dialog.setLocationRelativeTo(this);
+
+        javax.swing.JLabel lblNumber = new javax.swing.JLabel("Room Number:");
+        javax.swing.JTextField txtNumber = new javax.swing.JTextField();
+        
+        javax.swing.JLabel lblType = new javax.swing.JLabel("Room Type:");
+        javax.swing.JComboBox<String> cmbType = new javax.swing.JComboBox<>();
+        
+        // Load room types
+        List<RoomType> types = roomController.getAllRoomTypes();
+        for (RoomType type : types) {
+            cmbType.addItem(type.getId() + " - " + type.getName());
+        }
+
+        javax.swing.JLabel lblPrice = new javax.swing.JLabel("Price:");
+        javax.swing.JTextField txtPrice = new javax.swing.JTextField();
+        
+        javax.swing.JLabel lblStatus = new javax.swing.JLabel("Status:");
+        javax.swing.JComboBox<String> cmbStatus = new javax.swing.JComboBox<>(new String[]{"available", "occupied", "maintenance"});
+
+        javax.swing.JButton btnSave = new javax.swing.JButton("Save");
+        javax.swing.JButton btnCancel = new javax.swing.JButton("Cancel");
+
+        // Pre-fill if editing
+        if (room != null) {
+            txtNumber.setText(room.getRoomNumber());
+            txtPrice.setText(String.valueOf(room.getPrice()));
+            cmbStatus.setSelectedItem(room.getStatus());
+            // Select correct type
+            for (int i = 0; i < cmbType.getItemCount(); i++) {
+                if (cmbType.getItemAt(i).startsWith(room.getRoomTypeId() + " -")) {
+                    cmbType.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+
+        btnSave.addActionListener(e -> {
+            try {
+                String number = txtNumber.getText();
+                String typeStr = (String) cmbType.getSelectedItem();
+                int typeId = Integer.parseInt(typeStr.split(" - ")[0]);
+                double price = Double.parseDouble(txtPrice.getText());
+                String status = (String) cmbStatus.getSelectedItem();
+
+                if (room == null) {
+                    if (roomController.addRoom(number, typeId, price, status)) {
+                        JOptionPane.showMessageDialog(dialog, "Room created successfully!");
+                        loadRooms();
+                        dialog.dispose();
+                    } else {
+                        JOptionPane.showMessageDialog(dialog, "Failed to create room.");
+                    }
+                } else {
+                    if (roomController.updateRoom(room.getId(), number, typeId, price, status)) {
+                        JOptionPane.showMessageDialog(dialog, "Room updated successfully!");
+                        loadRooms();
+                        dialog.dispose();
+                    } else {
+                        JOptionPane.showMessageDialog(dialog, "Failed to update room.");
+                    }
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog, "Invalid input. Please check price and other fields.");
+            }
+        });
+
+        btnCancel.addActionListener(e -> dialog.dispose());
+
+        dialog.add(lblNumber);
+        dialog.add(txtNumber);
+        dialog.add(lblType);
+        dialog.add(cmbType);
+        dialog.add(lblPrice);
+        dialog.add(txtPrice);
+        dialog.add(lblStatus);
+        dialog.add(cmbStatus);
+        dialog.add(btnSave);
+        dialog.add(btnCancel);
+
+        dialog.setVisible(true);
+    }
+
+    private void deleteRoom() {
+        int selectedRow = jTable1.getSelectedRow();
+        if (selectedRow == -1) return;
+
+        int id = (int) jTable1.getValueAt(selectedRow, 0);
+        String number = (String) jTable1.getValueAt(selectedRow, 1);
+
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Are you sure you want to delete room " + number + "?", 
+            "Confirm Delete", 
+            JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            if (roomController.deleteRoom(id)) {
+                JOptionPane.showMessageDialog(this, "Room deleted successfully!");
+                loadRooms();
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to delete room.");
+            }
+        }
     }
 
     /**

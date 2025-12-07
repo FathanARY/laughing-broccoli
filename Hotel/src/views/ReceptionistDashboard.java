@@ -60,15 +60,25 @@ public class ReceptionistDashboard extends javax.swing.JFrame {
         initComponents();
         initRoomButtons();
         loadRoomStatus();
+        syncScrollPaneSize();
         
         // Setup Button Actions
         jButton1.addActionListener(e -> cancelBooking());
         jButton3.addActionListener(e -> handleCheckIn());
         jButton2.addActionListener(e -> handleCheckOut());
+        logOutbutton.addActionListener(e -> handleLogout());
     }
 
     public ReceptionistDashboard() {
         this(new UserController().getUserByUsername("receptionist"));
+    }
+
+    private void handleLogout() {
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to logout?", "Confirm Logout", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            new LoginForm().setVisible(true);
+            this.dispose();
+        }
     }
 
     private void initRoomButtons() {
@@ -82,44 +92,76 @@ public class ReceptionistDashboard extends javax.swing.JFrame {
     }
 
     private void loadRoomStatus() {
+        jPanel1.removeAll();
+        roomGroup = new ButtonGroup();
+        
+        // Set Layout for dynamic buttons (Grid with 9 columns to match design)
+        int cols = 9;
+        int hGap = 18;
+        int vGap = 18;
+        jPanel1.setLayout(new java.awt.GridLayout(0, cols, hGap, vGap));
+        jPanel1.setBorder(javax.swing.BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
         java.util.List<Room> rooms = roomController.getAllRooms();
-        for (Component comp : jPanel1.getComponents()) {
-            if (comp instanceof JToggleButton) {
-                JToggleButton btn = (JToggleButton) comp;
-                String roomNum = btn.getText();
-                
-                // Find room status
-                for (Room room : rooms) {
-                    if (room.getRoomNumber().equals(roomNum)) {
-                        if ("available".equalsIgnoreCase(room.getStatus())) {
-                            // Color code based on Room Type
-                            String type = room.getRoomType();
-                            if (type != null) {
-                                if (type.contains("Deluxe")) {
-                                    btn.setBackground(new Color(51, 153, 255)); // Blue for Deluxe
-                                } else if (type.contains("Suite") || type.contains("Executive")) {
-                                    btn.setBackground(new Color(255, 204, 51)); // Gold/Yellow for Suite
-                                } else {
-                                    btn.setBackground(Color.GREEN); // Standard
-                                }
-                            } else {
-                                btn.setBackground(Color.GREEN);
-                            }
-                        } else {
-                            btn.setBackground(Color.RED);
-                        }
-                        break;
+        
+        for (Room room : rooms) {
+            JToggleButton btn = new JToggleButton(room.getRoomNumber());
+            btn.setPreferredSize(new Dimension(90, 55));
+            
+            // Set color based on Status and Type
+            if ("available".equalsIgnoreCase(room.getStatus())) {
+                String type = room.getRoomTypeName();
+                if (type != null) {
+                    if (type.contains("Deluxe")) {
+                        btn.setBackground(new Color(51, 153, 255)); // Blue for Deluxe
+                    } else if (type.contains("Suite") || type.contains("Executive")) {
+                        btn.setBackground(new Color(255, 204, 51)); // Gold/Yellow for Suite
+                    } else {
+                        btn.setBackground(Color.GREEN); // Standard
                     }
+                } else {
+                    btn.setBackground(Color.GREEN);
                 }
+            } else {
+                btn.setBackground(Color.RED);
             }
+            
+            btn.addActionListener(e -> handleRoomSelection(btn.getText()));
+            roomGroup.add(btn);
+            jPanel1.add(btn);
         }
+
+        // Adjust preferred size so scrollbars do not appear when not needed
+        int rows = (rooms.size() + cols - 1) / cols;
+        int cellWidth = 90;
+        int cellHeight = 55;
+        int prefWidth = cols * cellWidth + (cols - 1) * hGap + 40;  // padding matches empty border
+        int prefHeight = rows * cellHeight + (rows - 1) * vGap + 40;
+        jPanel1.setPreferredSize(new Dimension(prefWidth, prefHeight));
+
+        // Keep the scroll pane from forcing a horizontal scrollbar
+        jScrollPane1.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        jScrollPane1.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        jScrollPane1.setPreferredSize(new Dimension(960, 480));
+        
+        jPanel1.revalidate();
+        jPanel1.repaint();
+        syncScrollPaneSize();
+    }
+
+    private void syncScrollPaneSize() {
+        Dimension panelPref = jPanel2.getPreferredSize();
+        Dimension scrollPref = jScrollPane1.getPreferredSize();
+        int targetHeight = Math.max(panelPref.height, scrollPref.height);
+        jScrollPane1.setPreferredSize(new Dimension(scrollPref.width, targetHeight));
+        jScrollPane1.getViewport().setPreferredSize(new Dimension(scrollPref.width, targetHeight));
     }
 
     private void handleRoomSelection(String roomNumber) {
         selectedRoom = roomController.getRoomByNumber(roomNumber);
         if (selectedRoom == null) return;
 
-        roomDescLabel.setText("<html>Room: " + selectedRoom.getRoomNumber() + "<br/>Type: " + selectedRoom.getRoomType() + "<br/>Price: Rp " + selectedRoom.getPrice() + "</html>");
+        roomDescLabel.setText("<html>Room: " + selectedRoom.getRoomNumber() + "<br/>Type: " + selectedRoom.getRoomTypeName() + "<br/>Price: Rp " + selectedRoom.getPrice() + "</html>");
 
         if ("available".equalsIgnoreCase(selectedRoom.getStatus())) {
             // Available: Enable fields for new booking
@@ -199,7 +241,7 @@ public class ReceptionistDashboard extends javax.swing.JFrame {
                 "Price/Day: Rp %.2f\n" +
                 "Total Price: Rp %.2f\n\n" +
                 "Proceed?",
-                selectedRoom.getRoomNumber(), selectedRoom.getRoomType(),
+                selectedRoom.getRoomNumber(), selectedRoom.getRoomTypeName(),
                 customerName, days, selectedRoom.getPrice(), totalAmount
             );
 
@@ -322,6 +364,15 @@ public class ReceptionistDashboard extends javax.swing.JFrame {
     private void initComponents() {
 
         jLabel1 = new javax.swing.JLabel();
+        jPanel2 = new javax.swing.JPanel();
+        jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
+        jButton3 = new javax.swing.JButton();
+        checkInField = new javax.swing.JFormattedTextField();
+        checkOutField = new javax.swing.JFormattedTextField();
+        roomDescLabel = new javax.swing.JLabel();
+        logOutbutton = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
         jPanel1 = new javax.swing.JPanel();
         jToggleButton3 = new javax.swing.JToggleButton();
         jToggleButton4 = new javax.swing.JToggleButton();
@@ -374,18 +425,92 @@ public class ReceptionistDashboard extends javax.swing.JFrame {
         jToggleButton54 = new javax.swing.JToggleButton();
         jToggleButton55 = new javax.swing.JToggleButton();
         jToggleButton56 = new javax.swing.JToggleButton();
-        jPanel2 = new javax.swing.JPanel();
-        jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
-        jButton3 = new javax.swing.JButton();
-        checkInField = new javax.swing.JFormattedTextField();
-        checkOutField = new javax.swing.JFormattedTextField();
-        roomDescLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jLabel1.setFont(new java.awt.Font("Dubai Medium", 0, 48)); // NOI18N
         jLabel1.setText("Reservations");
+
+        jPanel2.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+
+        jButton1.setFont(new java.awt.Font("Dubai Medium", 0, 14)); // NOI18N
+        jButton1.setText("Cancel Book");
+
+        jButton2.setFont(new java.awt.Font("Dubai Medium", 0, 14)); // NOI18N
+        jButton2.setText("Check-Out");
+
+        jButton3.setFont(new java.awt.Font("Dubai Medium", 0, 14)); // NOI18N
+        jButton3.setText("Check-In");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+
+        checkInField.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Check-In Date", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dubai Medium", 0, 12))); // NOI18N
+        checkInField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(java.text.DateFormat.getDateInstance(java.text.DateFormat.SHORT))));
+        checkInField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                checkInFieldActionPerformed(evt);
+            }
+        });
+
+        checkOutField.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Check-Out Date", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dubai Medium", 0, 12))); // NOI18N
+        checkOutField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(java.text.DateFormat.getDateInstance(java.text.DateFormat.SHORT))));
+        checkOutField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                checkOutFieldActionPerformed(evt);
+            }
+        });
+
+        roomDescLabel.setFont(new java.awt.Font("Dubai Medium", 0, 14)); // NOI18N
+        roomDescLabel.setText("Room Description:");
+
+        logOutbutton.setFont(new java.awt.Font("Dubai Medium", 0, 14)); // NOI18N
+        logOutbutton.setText("Logout");
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(checkOutField, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(checkInField, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(roomDescLabel)
+                                .addGap(69, 69, 69))))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(43, 43, 43)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(logOutbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(15, Short.MAX_VALUE))
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addGap(58, 58, 58)
+                .addComponent(checkInField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(checkOutField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(roomDescLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 139, Short.MAX_VALUE)
+                .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(logOutbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(45, 45, 45))
+        );
 
         jPanel1.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
@@ -619,7 +744,7 @@ public class ReceptionistDashboard extends javax.swing.JFrame {
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(42, 42, 42)
+                .addGap(20, 20, 20)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jToggleButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jToggleButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -682,106 +807,37 @@ public class ReceptionistDashboard extends javax.swing.JFrame {
                     .addComponent(jToggleButton54, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jToggleButton50, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jToggleButton53, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(42, Short.MAX_VALUE))
+                .addContainerGap(64, Short.MAX_VALUE))
         );
 
-        jPanel2.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
-
-        jButton1.setFont(new java.awt.Font("Dubai Medium", 0, 14)); // NOI18N
-        jButton1.setText("Cancel Book");
-
-        jButton2.setFont(new java.awt.Font("Dubai Medium", 0, 14)); // NOI18N
-        jButton2.setText("Check-Out");
-
-        jButton3.setFont(new java.awt.Font("Dubai Medium", 0, 14)); // NOI18N
-        jButton3.setText("Check-In");
-        jButton3.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton3ActionPerformed(evt);
-            }
-        });
-
-        checkInField.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Check-In Date", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dubai Medium", 0, 12))); // NOI18N
-        checkInField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                checkInFieldActionPerformed(evt);
-            }
-        });
-
-        checkOutField.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Check-Out Date", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dubai Medium", 0, 12))); // NOI18N
-        checkOutField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                checkOutFieldActionPerformed(evt);
-            }
-        });
-
-        roomDescLabel.setFont(new java.awt.Font("Dubai Medium", 0, 14)); // NOI18N
-        roomDescLabel.setText("Room Description:");
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(49, 49, 49))
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(checkOutField, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(checkInField, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(roomDescLabel)
-                        .addGap(69, 69, 69)))
-                .addContainerGap(15, Short.MAX_VALUE))
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addGap(58, 58, 58)
-                .addComponent(checkInField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(checkOutField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(roomDescLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(32, 32, 32))
-        );
+        jScrollPane1.setViewportView(jPanel1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(19, 19, 19)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 57, Short.MAX_VALUE)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(22, 22, 22))
-            .addGroup(layout.createSequentialGroup()
-                .addGap(496, 496, 496)
-                .addComponent(jLabel1)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(32, 32, 32)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(464, 464, 464)
+                        .addComponent(jLabel1))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 960, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(52, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(26, 26, 26)
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(37, 37, 37)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(25, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(42, Short.MAX_VALUE))
         );
 
         pack();
@@ -841,6 +897,7 @@ public class ReceptionistDashboard extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JToggleButton jToggleButton10;
     private javax.swing.JToggleButton jToggleButton11;
     private javax.swing.JToggleButton jToggleButton12;
@@ -892,6 +949,7 @@ public class ReceptionistDashboard extends javax.swing.JFrame {
     private javax.swing.JToggleButton jToggleButton7;
     private javax.swing.JToggleButton jToggleButton8;
     private javax.swing.JToggleButton jToggleButton9;
+    private javax.swing.JButton logOutbutton;
     private javax.swing.JLabel roomDescLabel;
     // End of variables declaration//GEN-END:variables
 }

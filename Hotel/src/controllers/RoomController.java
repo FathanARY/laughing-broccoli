@@ -236,4 +236,29 @@ public class RoomController {
         
         return null;
     }
+
+    // Mengambil semua tipe kamar
+    public List<models.RoomType> getAllRoomTypes() {
+        List<models.RoomType> types = new ArrayList<>();
+        String sql = "SELECT * FROM room_types";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            while (rs.next()) {
+                models.RoomType type = new models.RoomType(
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getString("description"),
+                    rs.getInt("capacity"),
+                    rs.getDouble("base_price")
+                );
+                types.add(type);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return types;
+    }
 }
