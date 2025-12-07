@@ -224,7 +224,7 @@ public class RegisterForm extends javax.swing.JFrame {
             return;
         }
 
-        if (userController.addUser(username, password, "Guest")) {
+        if (userController.addUser(username, password, "receptionist")) {
             JOptionPane.showMessageDialog(this, "Registration Successful! Please Login.");
             new LoginForm().setVisible(true);
             this.dispose();

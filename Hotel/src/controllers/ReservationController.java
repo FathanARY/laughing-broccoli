@@ -72,11 +72,53 @@ public class ReservationController {
         return reservations;
     }
     
+    public Reservation getActiveReservationByRoomId(int roomId) {
+        String sql = "SELECT r.*, ro.room_number FROM reservations r " +
+                     "JOIN rooms ro ON r.room_id = ro.id " +
+                     "WHERE r.room_id = ? AND r.status IN ('booked', 'checked_in')";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, roomId);
+            ResultSet rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                Reservation reservation = new Reservation();
+                reservation.setId(rs.getInt("id"));
+                reservation.setCustomerName(rs.getString("customer_name"));
+                reservation.setCustomerContact(rs.getString("customer_contact"));
+                reservation.setCheckInDate(rs.getDate("check_in_date"));
+                reservation.setCheckOutDate(rs.getDate("check_out_date"));
+                reservation.setRoomId(rs.getInt("room_id"));
+                reservation.setStatus(rs.getString("status"));
+                reservation.setTotalAmount(rs.getDouble("total_amount"));
+                reservation.setRoomNumber(rs.getString("room_number"));
+                return reservation;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean cancelReservation(int reservationId) {
+        String sql = "UPDATE reservations SET status = 'cancelled' WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, reservationId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public boolean addReservation(String customerName, String customerContact, 
                                    Date checkInDate, Date checkOutDate, 
-                                   int roomId, double totalAmount) {
+                                   int roomId, double totalAmount, int userId) {
         String sql = "INSERT INTO reservations (customer_name, customer_contact, check_in_date, " +
-                     "check_out_date, room_id, status, total_amount) VALUES (?, ?, ?, ?, ?, 'booked', ?)";
+                     "check_out_date, room_id, status, total_amount, user_id) VALUES (?, ?, ?, ?, ?, 'booked', ?, ?)";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -87,6 +129,7 @@ public class ReservationController {
             pstmt.setDate(4, checkOutDate);
             pstmt.setInt(5, roomId);
             pstmt.setDouble(6, totalAmount);
+            pstmt.setInt(7, userId);
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {

@@ -11,15 +11,20 @@ package views;
 
 import javax.swing.*;
 import java.awt.*;
+import controllers.AuthController;
+import models.User;
+
 public class LoginForm extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(LoginForm.class.getName());
     private Image backgroundImage;
+    private AuthController authController;
 
     /**
      * Creates new form LoginForm
      */
 public LoginForm() {
+    authController = new AuthController();
     backgroundImage = new ImageIcon(getClass().getResource("/images/Background.jpg")).getImage();
     initComponents();
     
@@ -195,7 +200,29 @@ public LoginForm() {
     }// </editor-fold>//GEN-END:initComponents
 
     private void loginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginButtonActionPerformed
-        // TODO add your handling code here:
+        String username = usernameField.getText();
+        String password = new String(passwordField.getPassword());
+        
+        if (username.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter username and password");
+            return;
+        }
+        
+        User user = authController.authenticate(username, password);
+        if (user != null) {
+            if ("receptionist".equalsIgnoreCase(user.getRole())) {
+                new ReceptionistDashboard(user).setVisible(true);
+                this.dispose();
+            } else if ("admin".equalsIgnoreCase(user.getRole())) {
+                new AdminDashboard().setVisible(true);
+                this.dispose();
+            } else {
+                 JOptionPane.showMessageDialog(this, "Login Successful as " + user.getRole());
+                 // Handle other roles or default dashboard
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Invalid username or password");
+        }
     }//GEN-LAST:event_loginButtonActionPerformed
 
     private void registerLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_registerLabelMouseClicked
