@@ -12,9 +12,14 @@ import java.util.List;
 
 public class RoomController {
     
+    // Mengambil semua data kamar (dengan JOIN ke room_types)
     public List<Room> getAllRooms() {
         List<Room> rooms = new ArrayList<>();
-        String sql = "SELECT r.*, rt.name as room_type_name FROM rooms r JOIN room_types rt ON r.room_type_id = rt.id ORDER BY r.room_number";
+        // Query menggunakan JOIN untuk mengambil nama tipe kamar dari tabel sebelah
+        String sql = "SELECT r.id, r.room_number, r.room_type_id, rt.name AS type_name, r.price, r.status " +
+                     "FROM rooms r " +
+                     "JOIN room_types rt ON r.room_type_id = rt.id " +
+                     "ORDER BY r.room_number";
         
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
@@ -24,7 +29,8 @@ public class RoomController {
                 Room room = new Room(
                     rs.getInt("id"),
                     rs.getString("room_number"),
-                    rs.getString("room_type_name"),
+                    rs.getInt("room_type_id"),   // Ambil ID Tipe
+                    rs.getString("type_name"),   // Ambil Nama Tipe (dari JOIN)
                     rs.getDouble("price"),
                     rs.getString("status")
                 );
@@ -37,8 +43,12 @@ public class RoomController {
         return rooms;
     }
     
+    // Mengambil satu kamar berdasarkan Nomor Kamar
     public Room getRoomByNumber(String roomNumber) {
-        String sql = "SELECT r.*, rt.name as room_type_name FROM rooms r JOIN room_types rt ON r.room_type_id = rt.id WHERE r.room_number = ?";
+        String sql = "SELECT r.id, r.room_number, r.room_type_id, rt.name AS type_name, r.price, r.status " +
+                     "FROM rooms r " +
+                     "JOIN room_types rt ON r.room_type_id = rt.id " +
+                     "WHERE r.room_number = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -50,7 +60,8 @@ public class RoomController {
                 return new Room(
                     rs.getInt("id"),
                     rs.getString("room_number"),
-                    rs.getString("room_type_name"),
+                    rs.getInt("room_type_id"),
+                    rs.getString("type_name"),
                     rs.getDouble("price"),
                     rs.getString("status")
                 );
@@ -61,6 +72,7 @@ public class RoomController {
         return null;
     }
 
+    // Method Seeding (Opsional: Jika ingin isi data otomatis lewat kodingan)
     public void seedRooms() {
         if (!getAllRooms().isEmpty()) return;
         
@@ -68,29 +80,20 @@ public class RoomController {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
-            // 101-120: Standard (Type 1)
-            for (int i = 101; i <= 120; i++) {
+            // 101-105: Standard Room (ID 1)
+            for (int i = 101; i <= 105; i++) {
                 pstmt.setString(1, String.valueOf(i));
-                pstmt.setInt(2, 1);
+                pstmt.setInt(2, 1); // ID 1 = Standard
                 pstmt.setDouble(3, 400000.0);
                 pstmt.setString(4, "available");
                 pstmt.addBatch();
             }
             
-            // 121-140: Deluxe (Type 2)
-            for (int i = 121; i <= 140; i++) {
+            // 201-205: Deluxe Room (ID 2)
+            for (int i = 201; i <= 205; i++) {
                 pstmt.setString(1, String.valueOf(i));
-                pstmt.setInt(2, 2);
+                pstmt.setInt(2, 2); // ID 2 = Deluxe
                 pstmt.setDouble(3, 850000.0);
-                pstmt.setString(4, "available");
-                pstmt.addBatch();
-            }
-            
-            // 141-150: Suite (Type 3)
-            for (int i = 141; i <= 150; i++) {
-                pstmt.setString(1, String.valueOf(i));
-                pstmt.setInt(2, 3);
-                pstmt.setDouble(3, 2500000.0);
                 pstmt.setString(4, "available");
                 pstmt.addBatch();
             }
@@ -102,9 +105,14 @@ public class RoomController {
         }
     }
     
+    // Mengambil kamar yang statusnya 'Available'
     public List<Room> getAvailableRooms() {
         List<Room> rooms = new ArrayList<>();
-        String sql = "SELECT r.*, rt.name as room_type_name FROM rooms r JOIN room_types rt ON r.room_type_id = rt.id WHERE r.status = 'available' ORDER BY r.room_number";
+        String sql = "SELECT r.id, r.room_number, r.room_type_id, rt.name AS type_name, r.price, r.status " +
+                     "FROM rooms r " +
+                     "JOIN room_types rt ON r.room_type_id = rt.id " +
+                     "WHERE r.status = 'available' " +
+                     "ORDER BY r.room_number";
         
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
@@ -114,7 +122,8 @@ public class RoomController {
                 Room room = new Room(
                     rs.getInt("id"),
                     rs.getString("room_number"),
-                    rs.getString("room_type"),
+                    rs.getInt("room_type_id"),
+                    rs.getString("type_name"),
                     rs.getDouble("price"),
                     rs.getString("status")
                 );
@@ -127,14 +136,15 @@ public class RoomController {
         return rooms;
     }
     
-    public boolean addRoom(String roomNumber, String roomType, double price, String status) {
-        String sql = "INSERT INTO rooms (room_number, room_type, price, status) VALUES (?, ?, ?, ?)";
+    // Menambah Kamar Baru (Admin)
+    public boolean addRoom(String roomNumber, int roomTypeId, double price, String status) {
+        String sql = "INSERT INTO rooms (room_number, room_type_id, price, status) VALUES (?, ?, ?, ?)";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, roomNumber);
-            pstmt.setString(2, roomType);
+            pstmt.setInt(2, roomTypeId); // Menggunakan ID, bukan String
             pstmt.setDouble(3, price);
             pstmt.setString(4, status);
             
@@ -145,6 +155,7 @@ public class RoomController {
         }
     }
     
+    // Update Status Kamar (Misal: saat Check-In/Check-Out)
     public boolean updateRoomStatus(int id, String status) {
         String sql = "UPDATE rooms SET status = ? WHERE id = ?";
         
@@ -161,14 +172,15 @@ public class RoomController {
         }
     }
 
-    public boolean updateRoom(int id, String roomNumber, String roomType, double price, String status) {
-        String sql = "UPDATE rooms SET room_number = ?, room_type = ?, price = ?, status = ? WHERE id = ?";
+    // Update Data Kamar (Admin)
+    public boolean updateRoom(int id, String roomNumber, int roomTypeId, double price, String status) {
+        String sql = "UPDATE rooms SET room_number = ?, room_type_id = ?, price = ?, status = ? WHERE id = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, roomNumber);
-            pstmt.setString(2, roomType);
+            pstmt.setInt(2, roomTypeId); // Update ID Tipe
             pstmt.setDouble(3, price);
             pstmt.setString(4, status);
             pstmt.setInt(5, id);
@@ -180,6 +192,7 @@ public class RoomController {
         }
     }
     
+    // Hapus Kamar
     public boolean deleteRoom(int id) {
         String sql = "DELETE FROM rooms WHERE id = ?";
         
@@ -194,8 +207,12 @@ public class RoomController {
         }
     }
     
+    // Ambil Kamar by ID
     public Room getRoomById(int id) {
-        String sql = "SELECT * FROM rooms WHERE id = ?";
+        String sql = "SELECT r.id, r.room_number, r.room_type_id, rt.name AS type_name, r.price, r.status " +
+                     "FROM rooms r " +
+                     "JOIN room_types rt ON r.room_type_id = rt.id " +
+                     "WHERE r.id = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -207,7 +224,8 @@ public class RoomController {
                 return new Room(
                     rs.getInt("id"),
                     rs.getString("room_number"),
-                    rs.getString("room_type"),
+                    rs.getInt("room_type_id"),
+                    rs.getString("type_name"),
                     rs.getDouble("price"),
                     rs.getString("status")
                 );
