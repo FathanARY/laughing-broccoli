@@ -448,7 +448,8 @@ public class ReceptionistDashboard extends javax.swing.JFrame {
         });
 
         checkInField.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Check-In Date", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dubai Medium", 0, 12))); // NOI18N
-        checkInField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(java.text.DateFormat.getDateInstance(java.text.DateFormat.SHORT))));
+        checkInField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("yyyy-MM-dd"))));
+        checkInField.setFocusLostBehavior(javax.swing.JFormattedTextField.PERSIST);
         checkInField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 checkInFieldActionPerformed(evt);
@@ -456,7 +457,8 @@ public class ReceptionistDashboard extends javax.swing.JFrame {
         });
 
         checkOutField.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Check-Out Date", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dubai Medium", 0, 12))); // NOI18N
-        checkOutField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(java.text.DateFormat.getDateInstance(java.text.DateFormat.SHORT))));
+        checkOutField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("yyyy-MM-dd"))));
+        checkOutField.setFocusLostBehavior(javax.swing.JFormattedTextField.PERSIST);
         checkOutField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 checkOutFieldActionPerformed(evt);
